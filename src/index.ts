@@ -1,15 +1,18 @@
-import Decimal from "decimal.js";
+import { Presets, SingleBar } from 'cli-progress';
+import { writeFileSync } from 'fs';
 import { Layer } from "./layer";
 import { Network } from "./network";
 import { Neuron } from "./neuron";
 import { open } from "./open";
 
-export function sigmoid(x: Decimal): Decimal {
-  return Decimal.exp(x.neg().toNumber()).plus(1).pow(-1);
+export function sigmoid(x: number): number {
+  return 1 / (1 + Math.exp(-x));
 }
 
-export function softmax(x: Decimal): Decimal {
-  return Decimal.exp(x).div(Decimal.sum(Decimal.exp(x)));
+export function softmax(x: number[]): number[] {
+  const expValues = x.map(value => Math.exp(value));
+  const sumExpValues = expValues.reduce((a, b) => a + b, 0);
+  return expValues.map(value => value / sumExpValues);
 }
 
 function Main() {
@@ -22,27 +25,31 @@ function Main() {
     new Layer(Array.from({ length: 784 }, () => new Neuron(784, sigmoid))),
     new Layer(Array.from({ length: 16 }, () => new Neuron(784, sigmoid))),
     new Layer(Array.from({ length: 16 }, () => new Neuron(16, sigmoid))),
-    new Layer(Array.from({ length: 10 }, () => new Neuron(16, softmax)))
+    new Layer(Array.from({ length: 10 }, () => new Neuron(16, sigmoid)))
   ]);
 
+  const bar = new SingleBar({}, Presets.shades_classic);
+
   console.log("Starting training...");
-  for (let epoch = 0; epoch < 10; epoch++) {
+  for (let epoch = 0; epoch < 1; epoch++) {
     console.log(`Epoch ${epoch + 1}`);
+    bar.start(trainingData.length, 0);
     let counter = 0;
     for (const data of trainingData) {
       counter++;
-      console.log(`Training data ${counter} of ${trainingData.length}`);
-      const inputs = data.data.map(x => new Decimal(x));
-      const targets = Array.from({ length: 10 }, (_, i) => i === Number(data.label) ? new Decimal(1) : new Decimal(0));
-      network.train(inputs, targets, new Decimal(0.1));
+      const inputs = data.data.map(x => x);
+      const targets = Array.from({ length: 10 }, (_, i) => i === Number(data.label) ? 1 : 0);
+      bar.update(counter);
+      network.train(inputs, targets, 0.1);
     }
+    bar.stop();
   }
 
   console.log("Training completed. Starting testing...");
   let correct = 0;
   for (const data of testingData) {
-    const inputs = data.data.map(x => new Decimal(x));
-    const prediction = network.predict(inputs).map(x => x.toNumber());
+    const inputs = data.data.map(x => x);
+    const prediction = network.predict(inputs);
     const actual = Number(data.label);
     const maxIndex = prediction.indexOf(Math.max(...prediction));
     if (maxIndex === actual) {
@@ -50,6 +57,8 @@ function Main() {
     }
   }
   console.log(`Accuracy: ${(correct / testingData.length * 100).toFixed(2)}%`);
+
+  writeFileSync("network", network.exportWeightsAndBiases());
 }
 
 Main();

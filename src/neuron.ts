@@ -1,45 +1,47 @@
-import { Decimal } from 'decimal.js';
+import { all, create } from 'mathjs';
+
+const math = create(all);
 
 export class Neuron {
-  weights: Decimal[];
-  bias: Decimal;
-  activation: (x: Decimal) => Decimal;
+  weights: number[];
+  bias: number;
+  activation: (x: number) => number;
 
-  constructor(inputLength: number, activation: (x: Decimal) => Decimal) {
-    this.bias = new Decimal(Math.random() * 2 - 1);
-    this.weights = Array.from({ length: inputLength }, () => new Decimal(Math.random() * 2 - 1));
+  constructor(inputLength: number, activation: (x: number) => number) {
+    this.bias = Math.random() * 2 - 1;
+    this.weights = Array.from({ length: inputLength }, () => Math.random() * 2 - 1);
     this.activation = activation;
   }
 
-  forward(inputs: Decimal[]): Decimal {
+  forward(inputs: number[]): number {
     if (inputs.length !== this.weights.length) {
-      throw new Error("Input size must match number of weights");
+      throw new Error(`Input size must match number of weights, input size: ${inputs.length}, number of weights: ${this.weights.length}`);
     }
-    const sum = inputs.reduce((acc, val, i) => acc.plus(val.times(this.weights[i])), this.bias);
+    const sum = math.add(math.dot(inputs, this.weights), this.bias);
     return this.activation(sum);
   }
 
-  backward(error: Decimal, learningRate: Decimal): Decimal[] {
-    const gradient = error.times(this.activation(this.bias));
-    this.weights = this.weights.map(weight => weight.plus(gradient.times(learningRate)));
-    this.bias = this.bias.plus(gradient.times(learningRate));
-    const updatedWeights = this.weights.map(weight => weight.times(error));
+  backward(error: number, learningRate: number): number[] {
+    const gradient = error * this.activation(this.bias);
+    this.weights = math.add(this.weights, math.multiply(gradient, learningRate)) as number[];
+    this.bias += gradient * learningRate;
+    const updatedWeights = math.multiply(this.weights, error) as number[];
     return updatedWeights;
   }
 
-  getWeights(): Decimal[] {
+  getWeights(): number[] {
     return this.weights;
   }
 
-  setWeights(weights: Decimal[]): void {
+  setWeights(weights: number[]): void {
     this.weights = weights;
   }
 
-  setBias(bias: Decimal): void {
+  setBias(bias: number): void {
     this.bias = bias;
   }
 
-  getBias(): Decimal {
+  getBias(): number {
     return this.bias;
   }
 }

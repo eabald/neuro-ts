@@ -1,39 +1,40 @@
-import Decimal from "decimal.js";
+import { all, create } from 'mathjs';
 import { Neuron } from "./neuron";
+
+const math = create(all);
 
 export class Layer {
   constructor(private neurons: Neuron[]) { }
 
-  forward(inputs: Decimal[]): Decimal[] {
+  forward(inputs: number[]): number[] {
     return this.neurons.map(neuron => neuron.forward(inputs));
   }
 
-  backward(errors: Decimal[], learningRate: Decimal): Decimal[][] {
+  backward(errors: number[], learningRate: number): number[][] {
     return this.neurons.map((neuron) => {
       const weights = neuron.getWeights();
-      const error = errors.reduce((acc, val, j) => {
-        return acc.plus(val.times(weights[j]));
-      }, new Decimal(0));
+      const avgError = math.mean(errors);
+      const error = math.dot(Array.from({ length: weights.length }).map(() => avgError), weights);
       return neuron.backward(error, learningRate);
     });
   }
 
-  getWeights(): Decimal[][] {
+  getWeights(): number[][] {
     return this.neurons.map(neuron => neuron.getWeights());
   }
 
-  setWeights(weights: Decimal[][]): void {
+  setWeights(weights: number[][]): void {
     let index = 0;
     for (const neuron of this.neurons) {
       neuron.setWeights(weights[index++]);
     }
   }
 
-  getBiases(): Decimal[] {
+  getBiases(): number[] {
     return this.neurons.map(neuron => neuron.getBias());
   }
 
-  setBiases(biases: Decimal[]): void {
+  setBiases(biases: number[]): void {
     this.neurons.forEach((neuron, i) => {
       neuron.setBias(biases[i]);
     });

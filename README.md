@@ -1,6 +1,6 @@
 # NeuroTS
 
-NeuroTS is a TypeScript-based neural network library designed for educational purposes. It provides a simple implementation of neural networks, including layers, neurons, and activation functions.
+NeuroTS is a TypeScript-based neural network designed for educational purposes. It provides a simple implementation of neural networks, including layers, neurons, and activation functions.
 
 ## Features
 
@@ -50,7 +50,8 @@ npm test
 
 ## Dependencies
 
-`decimal.js`: Library for arbitrary-precision decimal arithmetic
+~~`decimal.js`: Library for arbitrary-precision decimal arithmetic~~
+`math.js`: better performance than decimal
 
 ## License
 
