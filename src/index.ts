@@ -45,20 +45,24 @@ function Main() {
     bar.stop();
   }
 
+  writeFileSync("network", network.exportWeightsAndBiases());
+
   console.log("Training completed. Starting testing...");
   let correct = 0;
+  bar.start(trainingData.length, 0);
+  let counter = 0;
   for (const data of testingData) {
+    counter++;
     const inputs = data.data.map(x => x);
     const prediction = network.predict(inputs);
     const actual = Number(data.label);
     const maxIndex = prediction.indexOf(Math.max(...prediction));
+    bar.update(counter);
     if (maxIndex === actual) {
       correct++;
     }
   }
   console.log(`Accuracy: ${(correct / testingData.length * 100).toFixed(2)}%`);
-
-  writeFileSync("network", network.exportWeightsAndBiases());
 }
 
 Main();
